@@ -1,0 +1,259 @@
+import os
+from typing import Any, Dict, Optional
+from fastmcp import FastMCP, Context
+import httpx
+
+SYSMLV2_URL = os.getenv("SYSMLV2_URL", "http://localhost:8080")
+READ_ONLY = os.getenv("READ_ONLY", "true").lower() in ("true", "1", "yes")
+
+mcp = FastMCP("SysMLv2 API")
+
+def get_auth_header(ctx: Context) -> dict:
+    """Extract Authorization header from request context."""
+    headers = ctx.request_context.request.headers
+    auth_header = headers.get("authorization") or headers.get("Authorization")
+    if auth_header:
+        return {"Authorization": auth_header}
+    return {}
+
+async def make_request(
+    method: str, 
+    path: str, 
+    ctx: Context,
+    query_params: Optional[Dict] = None, 
+    body: Optional[Dict] = None
+) -> Dict[str, Any]:
+    """Make an HTTP request to the SysMLv2 API."""
+    if not SYSMLV2_URL:
+        raise ValueError("SYSMLV2_URL environment variable is not set")
+    
+    full_url = f"{SYSMLV2_URL.rstrip('/')}{path}"
+    headers = get_auth_header(ctx)
+    headers["Content-Type"] = "application/json"
+     
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            if method == "GET":
+                response = await client.get(full_url, headers=headers, params=query_params)
+            elif method == "POST":
+                response = await client.post(full_url, headers=headers, params=query_params, json=body)
+            elif method == "PUT":
+                response = await client.put(full_url, headers=headers, params=query_params, json=body)
+            elif method == "DELETE":
+                response = await client.delete(full_url, headers=headers, params=query_params)
+            else:
+                return {"error": f"Unsupported method: {method}"}
+            
+            response.raise_for_status()
+            
+            if response.headers.get("content-type", "").startswith("application/json"):
+                return response.json()
+            else:
+                return response.text
+        except httpx.HTTPStatusError as e:
+            return {
+                "error": f"HTTP {e.response.status_code}",
+                "message": e.response.text,
+                "url": str(e.request.url)
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+
+#@mcp.tool()
+#async def get_datatypes(pageAfter: Optional[str] = None, pageBefore: Optional[str] = None, pageSize: Optional[int] = None) -> Dict[str, Any]:
+#    """Get datatypes"""
+#    params = {}
+#    if pageAfter: params["pageAfter"] = pageAfter
+#    if pageBefore: params["pageBefore"] = pageBefore
+#    if pageSize: params["pageSize"] = pageSize
+#    return await make_request("GET", "/meta/datatypes", query_params=params)
+
+#@mcp.tool()
+#async def get_datatype_by_id(datatypeId: str) -> Dict[str, Any]:
+#    """Get datatype by ID"""
+#    return await make_request("GET", f"/meta/datatypes/{datatypeId}")
+
+@mcp.tool()
+async def get_projects(ctx: Context) -> list[dict]:
+    """Get projects"""
+    return await make_request("GET", "/projects", ctx)
+
+
+@mcp.tool()
+async def get_project_by_id(projectId: str, ctx: Context) -> Dict[str, Any]:
+    """Get project by ID"""
+    return await make_request("GET", f"/projects/{projectId}", ctx)
+
+if not READ_ONLY:
+    @mcp.tool()
+    async def post_project(ctx: Context, body: Dict[str, Any]) -> Dict[str, Any]:
+        """Create project"""
+        return await make_request("POST", "/projects", ctx, body=body)
+
+    @mcp.tool()
+    async def put_project_by_id(projectId: str, ctx: Context, body: Dict[str, Any]) -> Dict[str, Any]:
+        """Update project by ID"""
+        return await make_request("PUT", f"/projects/{projectId}", ctx, body=body)
+
+    @mcp.tool()
+    async def delete_project_by_id(projectId: str, ctx: Context) -> Dict[str, Any]:
+        """Delete project by ID"""
+        return await make_request("DELETE", f"/projects/{projectId}", ctx)
+
+@mcp.tool()
+async def get_branches_by_project(projectId: str, ctx: Context) -> list[dict]:
+    """Get branches by project"""
+    return await make_request("GET", f"/projects/{projectId}/branches", ctx)
+
+@mcp.tool()
+async def get_branches_by_project_and_id(projectId: str, branchId: str, ctx: Context) -> Dict[str, Any]:
+    """Get branch by project and ID"""
+    return await make_request("GET", f"/projects/{projectId}/branches/{branchId}", ctx)
+
+if not READ_ONLY:
+    @mcp.tool()
+    async def post_branch_by_project(projectId: str, ctx: Context, body: Dict[str, Any]) -> Dict[str, Any]:
+        """Create branch by project"""
+        return await make_request("POST", f"/projects/{projectId}/branches", ctx, body=body)
+
+    @mcp.tool()
+    async def delete_branch_by_project_and_id(projectId: str, branchId: str, ctx: Context) -> Dict[str, Any]:
+        """Delete branch by project and ID"""
+        return await make_request("DELETE", f"/projects/{projectId}/branches/{branchId}", ctx)
+
+    #@mcp.tool()
+    #async def merge(projectId: str, targetBranchId: str, ctx: Context, body: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    #    """Merge source commit(s) into a target branch"""
+    #    return await make_request("POST", f"/projects/{projectId}/branches/{targetBranchId}/merge", ctx, body=body)
+
+@mcp.tool()
+async def get_commits_by_project(projectId: str, ctx: Context) -> list[dict]:
+    """Get commits by project"""
+    return await make_request("GET", f"/projects/{projectId}/commits", ctx)
+
+@mcp.tool()
+async def get_commit_by_project_and_id(projectId: str, commitId: str, ctx: Context) -> Dict[str, Any]:
+    """Get commit by project and ID"""
+    return await make_request("GET", f"/projects/{projectId}/commits/{commitId}", ctx)
+
+if not READ_ONLY:
+    @mcp.tool()
+    async def post_commit_by_project(projectId: str, ctx: Context, body: Dict[str, Any], branchId: Optional[str]) -> Dict[str, Any]:
+        """Create commit by project"""
+        params = {}
+        if branchId: params["branchId"] = branchId
+        return await make_request("POST", f"/projects/{projectId}/commits", ctx, body=body, query_params=params)
+
+
+#@mcp.tool()
+#async def get_changes_by_project_commit(projectId: str, commitId: str, ctx: Context, commitId_query: Optional[str] = None) -> Dict[str, Any]:
+#    """Get changes by project and commit"""
+#    params = {}
+#    if commitId_query: params["commitId"] = commitId_query
+#    return await make_request("GET", f"/projects/{projectId}/commits/{commitId}/changes", ctx, query_params=params)
+
+#@mcp.tool()
+#async def get_change_by_project_commit_id(projectId: str, commitId: str, changeId: str, ctx: Context) -> Dict[str, Any]:
+#    """Get change by project, commit and ID"""
+#    return await make_request("GET", f"/projects/{projectId}/commits/{commitId}/changes/{changeId}", ctx)
+
+@mcp.tool()
+async def get_elements_by_project_commit(projectId: str, commitId: str, ctx: Context) -> list[dict]:
+    """Get elements by project and commit"""
+    return await make_request("GET", f"/projects/{projectId}/commits/{commitId}/elements", ctx)
+
+@mcp.tool()
+async def get_element_by_project_commit_id(projectId: str, commitId: str, elementId: str, ctx: Context) -> Dict[str, Any]:
+    """Get element by project, commit and ID"""
+    return await make_request("GET", f"/projects/{projectId}/commits/{commitId}/elements/{elementId}", ctx)
+
+@mcp.tool()
+async def get_project_usage_by_project_commit_element(projectId: str, commitId: str, elementId: str, ctx: Context) -> Dict[str, Any]:
+    """Get ProjectUsage that originates the provided element"""
+    return await make_request("GET", f"/projects/{projectId}/commits/{commitId}/elements/{elementId}/projectUsage", ctx)
+
+@mcp.tool()
+async def get_relationships_by_project_commit_related_element(projectId: str, commitId: str, relatedElementId: str, ctx: Context, direction: Optional[str] = None) -> list[dict]:
+    """Get relationships for a related element, direction can be 'in', 'out', or 'both'"""
+    params = {}
+    if direction: params["direction"] = direction
+    return await make_request("GET", f"/projects/{projectId}/commits/{commitId}/elements/{relatedElementId}/relationships", ctx, query_params=params)
+
+@mcp.tool()
+async def get_roots_by_project_commit(projectId: str, commitId: str, ctx: Context) -> list[dict]:
+    """Get root elements by project and commit"""
+    return await make_request("GET", f"/projects/{projectId}/commits/{commitId}/roots", ctx)
+
+#@mcp.tool()
+#async def diff(projectId: str, compareCommitId: str, ctx: Context, commitId: Optional[str] = None) -> Dict[str, Any]:
+#    """Compare two commits"""
+#    params = {}
+#    if commitId: params["commitId"] = commitId
+#    return await make_request("GET", f"/projects/{projectId}/commits/{compareCommitId}/diff", ctx, query_params=params)
+
+@mcp.tool()
+async def get_queries_by_project(projectId: str, ctx: Context) -> list[dict]:
+    """Get queries by project"""
+    return await make_request("GET", f"/projects/{projectId}/queries", ctx)
+
+@mcp.tool()
+async def get_query_by_project_and_id(projectId: str, queryId: str, ctx: Context) -> Dict[str, Any]:
+    """Get query by project and ID"""
+    return await make_request("GET", f"/projects/{projectId}/queries/{queryId}", ctx)
+
+@mcp.tool()
+async def get_query_results_by_project_id_query_id(projectId: str, queryId: str, ctx: Context, commitId: Optional[str] = None) -> list[dict]:
+    """Get query results by project and query ID"""
+    params = {}
+    if commitId: params["commitId"] = commitId
+    return await make_request("GET", f"/projects/{projectId}/queries/{queryId}/results", ctx, query_params=params)
+
+@mcp.tool()
+async def get_query_results_by_project_id_query(projectId: str, query: str, ctx: Context, commitId: Optional[str] = None) -> list[dict]:
+    """Get query results by project and commitId given query"""
+    params = {}
+    if commitId: params["commitId"] = commitId
+    return await make_request("POST", f"/projects/{projectId}/query-results", ctx, body=query, query_params=params)
+
+if not READ_ONLY:
+    @mcp.tool()
+    async def post_query_by_project(projectId: str, ctx: Context, body: Dict[str, Any]) -> Dict[str, Any]:
+        """Create query by project"""
+        return await make_request("POST", f"/projects/{projectId}/queries", ctx, body=body)
+
+    @mcp.tool()
+    async def put_query_by_project_and_id(projectId: str, queryId: str, ctx: Context, body: Dict[str, Any]) -> Dict[str, Any]:
+        """Update query by project and ID"""
+        return await make_request("PUT", f"/projects/{projectId}/queries/{queryId}", ctx, body=body)
+
+    @mcp.tool()
+    async def delete_query_by_project_and_id(projectId: str, queryId: str, ctx: Context) -> Dict[str, Any]:
+        """Delete query by project and ID"""
+        return await make_request("DELETE", f"/projects/{projectId}/queries/{queryId}", ctx)
+
+
+@mcp.tool()
+async def get_tags_by_project(projectId: str, ctx: Context) -> list[dict]:
+    """Get tags by project"""
+    return await make_request("GET", f"/projects/{projectId}/tags", ctx)
+
+@mcp.tool()
+async def get_tag_by_project_and_id(projectId: str, tagId: str, ctx: Context) -> Dict[str, Any]:
+    """Get tag by project and ID"""
+    return await make_request("GET", f"/projects/{projectId}/tags/{tagId}", ctx)
+
+if not READ_ONLY:
+    @mcp.tool()
+    async def post_tag_by_project(projectId: str, ctx: Context, body: Dict[str, Any]) -> Dict[str, Any]:
+        """Create tag by project"""
+        return await make_request("POST", f"/projects/{projectId}/tags", ctx, body=body)
+
+    @mcp.tool()
+    async def delete_tag_by_project_and_id(projectId: str, tagId: str, ctx: Context) -> Dict[str, Any]:
+        """Delete tag by project and ID"""
+        return await make_request("DELETE", f"/projects/{projectId}/tags/{tagId}", ctx)
+
+
+if __name__ == "__main__":
+    mcp.run(transport="http", host="0.0.0.0", port=8000)
