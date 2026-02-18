@@ -22,6 +22,7 @@ The server is configured via environment variables:
 - `SYSMLV2_URL`: The base URL of the SysMLv2 API (default: `http://localhost:8080`)
 - `READ_ONLY`: Enable read-only mode, only exposing GET endpoints (default: `true`)
   - Accepted values: `true`, `1`, `yes` (case-insensitive)
+- `MCPPATH`: MCP endpoint path (default: `/mcp`)
 
 ## Usage
 

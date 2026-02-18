@@ -4,6 +4,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV SYSMLV2_URL=http://localhost:8080
 ENV READ_ONLY=true
+ENV MCPPATH=/mcp
 
 # Set the working directory inside the container
 WORKDIR /app

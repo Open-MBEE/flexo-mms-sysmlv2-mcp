@@ -7,6 +7,7 @@ from sysmlv2 import *
 
 SYSMLV2_URL = os.getenv("SYSMLV2_URL", "http://localhost:8080")
 READ_ONLY = os.getenv("READ_ONLY", "true").lower() in ("true", "1", "yes")
+MCPPATH = os.getenv("MCPPATH", "/mcp")
 
 mcp = FastMCP("SysMLv2 API")
 
@@ -259,4 +260,4 @@ if not READ_ONLY:
 
 
 if __name__ == "__main__":
-    mcp.run(transport="http", host="0.0.0.0", port=8000)
+    mcp.run(transport="http", host="0.0.0.0", port=8000, path=MCPPATH)
