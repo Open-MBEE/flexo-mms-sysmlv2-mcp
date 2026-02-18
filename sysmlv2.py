@@ -1,14 +1,20 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, Literal, Union
 
 class Identified(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    
     id: str = Field(alias='@id')
 
 class BranchRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    
     name: str
     head: Identified
 
 class Branch(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    
     id: str = Field(alias='@id')
     name: str
     created: str
@@ -18,6 +24,8 @@ class Branch(BaseModel):
     type: Literal['Branch'] = Field(default='Branch', alias='@type')
 
 class Project(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    
     id: str = Field(alias='@id')
     name: str
     created: str
@@ -26,12 +34,16 @@ class Project(BaseModel):
     type: Literal['Project'] = Field(default='Project', alias='@type')
 
 class ProjectRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    
     name: str
     description: Optional[str] = None
     defaultBranch: Optional[Identified] = None
 
 
 class Tag(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    
     id: str = Field(alias='@id')
     name: str
     created: str
@@ -41,10 +53,14 @@ class Tag(BaseModel):
     type: Literal["Tag"] = Field(default='Tag', alias='@type')
 
 class TagRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    
     name: str
     taggedCommit: Identified
 
 class Commit(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    
     id: str = Field(alias='@id')
     created: str
     owningProject: Identified
@@ -53,16 +69,22 @@ class Commit(BaseModel):
     type: Literal['Commit'] = Field(default='Commit', alias='@type')
 
 class PrimitiveConstraint(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    
     value: Union[str, int, float, bool, Identified]
     operator: Literal['=', '>', '<']
     inverse: bool
     property: str
     
 class CompositeConstraint(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    
     constraint: list[PrimitiveConstraint]
     operator: Literal['and', 'or']
 
 class Query(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    
     id: str = Field(alias='@id')
     owningProject: Identified
     select: list[str]
@@ -70,5 +92,7 @@ class Query(BaseModel):
     type: Literal['Query'] = Field(default='Query', alias='@type')
 
 class QueryRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    
     select: list[str]
-    where: Union[CompositeConstraint, PrimitiveConstraint]
+    where: PrimitiveConstraint
