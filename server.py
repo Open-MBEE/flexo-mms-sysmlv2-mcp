@@ -1,7 +1,8 @@
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 from fastmcp import FastMCP, Context
 import httpx
+from pydantic import BaseModel
 from sysmlv2 import *
 
 SYSMLV2_URL = os.getenv("SYSMLV2_URL", "http://localhost:8080")
@@ -22,8 +23,8 @@ async def make_request(
     path: str, 
     ctx: Context,
     query_params: Optional[Dict] = None, 
-    body: Optional[Dict] = None
-) -> Dict[str, Any]:
+    body: Optional[Union[Dict, BaseModel, str]] = None
+) -> Any:
     """Make an HTTP request to the SysMLv2 API."""
     if not SYSMLV2_URL:
         raise ValueError("SYSMLV2_URL environment variable is not set")

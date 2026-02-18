@@ -1,82 +1,74 @@
-from pydantic.dataclasses import dataclass
-from pydantic import Field
-from typing import Optional, Literal
+from pydantic import BaseModel, Field
+from typing import Optional, Literal, Union
 
-@dataclass
-class Identified:
+class Identified(BaseModel):
     id: str = Field(alias='@id')
 
-@dataclass
-class BranchRequest:
+class BranchRequest(BaseModel):
     name: str
     head: Identified
 
-@dataclass
-class Branch:
+class Branch(BaseModel):
     id: str = Field(alias='@id')
-    type: str = Field(alias='@type', const=True, default="Branch")
     name: str
     created: str
     head: Identified
     owningProject: Identified
     referencedCommit: Identified
+    type: Literal['Branch'] = Field(default='Branch', alias='@type')
 
-@dataclass
-class Project:
+class Project(BaseModel):
     id: str = Field(alias='@id')
-    type: str = Field(alias='@type', const=True, default="Project")
     name: str
     created: str
     description: str
     defaultBranch: Identified
+    type: Literal['Project'] = Field(default='Project', alias='@type')
 
-@dataclass
-class ProjectRequest:
+class ProjectRequest(BaseModel):
     name: str
-    description: Optional[str]
-    defaultBranch: Optional[Identified]
+    description: Optional[str] = None
+    defaultBranch: Optional[Identified] = None
 
 
-@dataclass
-class Tag:
+class Tag(BaseModel):
     id: str = Field(alias='@id')
-    type: str = Field(alias='@type', const=True, default="Tag")
     name: str
     created: str
     referencedCommit: Identified
     owningProject: Identified
     taggedCommit: Identified
+    type: Literal["Tag"] = Field(default='Tag', alias='@type')
 
-@dataclass
-class TagRequest:
+class TagRequest(BaseModel):
     name: str
     taggedCommit: Identified
 
-@dataclass
-class Commit:
+class Commit(BaseModel):
     id: str = Field(alias='@id')
-    type: str = Field(alias='@type', const=True, default="Commit")
     created: str
     owningProject: Identified
     description: str
-    previousCommit: Optional[Identified]
+    previousCommit: Optional[Identified] = None
+    type: Literal['Commit'] = Field(default='Commit', alias='@type')
 
-@dataclass
-class PrimitiveConstraint:
-    value: str | int | float | bool | Identified
+class PrimitiveConstraint(BaseModel):
+    value: Union[str, int, float, bool, Identified]
     operator: Literal['=', '>', '<']
     inverse: bool
     property: str
     
-@dataclass
-class CompositeConstraint:
+class CompositeConstraint(BaseModel):
     constraint: list[PrimitiveConstraint]
     operator: Literal['and', 'or']
 
-@dataclass
-class Query:
+class Query(BaseModel):
     id: str = Field(alias='@id')
-    type: str = Field(alias='@type', const=True, default="Query")
     owningProject: Identified
     select: list[str]
-    where: CompositeConstraint | PrimitiveConstraint
+    where: Union[CompositeConstraint, PrimitiveConstraint]
+    type: Literal['Query'] = Field(default='Query', alias='@type')
+
+class QueryRequest(BaseModel):
+    select: list[str]
+    where: Union[CompositeConstraint, PrimitiveConstraint]

@@ -60,6 +60,35 @@ client = Client(
 )
 ```
 
+## Docker
+
+### Building the Image
+
+```bash
+docker build -t flexo-mms-sysmlv2-mcp .
+```
+
+### Running the Container
+
+Run with custom MMS URL:
+
+```bash
+docker run -d \
+  -p 8000:8000 \
+  -e MMS_URL=https://your-flexo-mms-server \
+  flexo-mms-sysmlv2-mcp
+```
+
+Run in read-write mode (enables create/update/delete operations):
+
+```bash
+docker run -d \
+  -p 8000:8000 \
+  -e MMS_URL=https://your-mms-server \
+  -e READ_ONLY=false \
+  flexo-mms-sysmlv2-mcp
+```
+
 ## Available Tools
 
 The server exposes all operations from the OpenAPI specification as MCP tools. Each tool corresponds to a REST API endpoint:
