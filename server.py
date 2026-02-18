@@ -85,7 +85,7 @@ async def get_projects(ctx: Context) -> list[Project]:
 
 @mcp.tool()
 async def get_project_by_id(projectId: str, ctx: Context) -> Project:
-    """Get project by ID"""
+    """Get project by project id"""
     return await make_request("GET", f"/projects/{projectId}", ctx)
 
 if not READ_ONLY:
@@ -96,33 +96,33 @@ if not READ_ONLY:
 
     @mcp.tool()
     async def put_project_by_id(projectId: str, ctx: Context, body: ProjectRequest) -> Project:
-        """Update project by ID"""
+        """Update project by project id"""
         return await make_request("PUT", f"/projects/{projectId}", ctx, body=body)
 
     @mcp.tool()
     async def delete_project_by_id(projectId: str, ctx: Context) -> Project:
-        """Delete project by ID"""
+        """Delete project by project id"""
         return await make_request("DELETE", f"/projects/{projectId}", ctx)
 
 @mcp.tool()
 async def get_branches_by_project(projectId: str, ctx: Context) -> list[Branch]:
-    """Get branches by project"""
+    """Get branches by project id"""
     return await make_request("GET", f"/projects/{projectId}/branches", ctx)
 
 @mcp.tool()
 async def get_branches_by_project_and_id(projectId: str, branchId: str, ctx: Context) -> Branch:
-    """Get branch by project and ID"""
+    """Get branch by project and branch id"""
     return await make_request("GET", f"/projects/{projectId}/branches/{branchId}", ctx)
 
 if not READ_ONLY:
     @mcp.tool()
     async def post_branch_by_project(projectId: str, ctx: Context, body: BranchRequest) -> Branch:
-        """Create branch by project"""
+        """Create branch in project"""
         return await make_request("POST", f"/projects/{projectId}/branches", ctx, body=body)
 
     @mcp.tool()
     async def delete_branch_by_project_and_id(projectId: str, branchId: str, ctx: Context) -> Branch:
-        """Delete branch by project and ID"""
+        """Delete branch by project and branch id"""
         return await make_request("DELETE", f"/projects/{projectId}/branches/{branchId}", ctx)
 
     #@mcp.tool()
@@ -132,18 +132,18 @@ if not READ_ONLY:
 
 @mcp.tool()
 async def get_commits_by_project(projectId: str, ctx: Context) -> list[Commit]:
-    """Get commits by project"""
+    """Get commits by project id"""
     return await make_request("GET", f"/projects/{projectId}/commits", ctx)
 
 @mcp.tool()
 async def get_commit_by_project_and_id(projectId: str, commitId: str, ctx: Context) -> Commit:
-    """Get commit by project and ID"""
+    """Get commit by project and commit id"""
     return await make_request("GET", f"/projects/{projectId}/commits/{commitId}", ctx)
 
 if not READ_ONLY:
     @mcp.tool()
     async def post_commit_by_project(projectId: str, ctx: Context, body: Dict[str, Any], branchId: Optional[str]) -> Commit:
-        """Create commit by project"""
+        """Create commit in project, if branch id isn't specified commit will be made on project's default branch"""
         params = {}
         if branchId: params["branchId"] = branchId
         return await make_request("POST", f"/projects/{projectId}/commits", ctx, body=body, query_params=params)
@@ -163,21 +163,21 @@ if not READ_ONLY:
 
 @mcp.tool()
 async def get_elements_by_project_commit(projectId: str, commitId: str, ctx: Context) -> list[dict]:
-    """Get elements by project and commit"""
+    """Get elements by project and commit id"""
     return await make_request("GET", f"/projects/{projectId}/commits/{commitId}/elements", ctx)
 
 @mcp.tool()
 async def get_element_by_project_commit_id(projectId: str, commitId: str, elementId: str, ctx: Context) -> Dict[str, Any]:
-    """Get element by project, commit and ID"""
+    """Get element by project, commit and element id"""
     return await make_request("GET", f"/projects/{projectId}/commits/{commitId}/elements/{elementId}", ctx)
 
-@mcp.tool()
-async def get_project_usage_by_project_commit_element(projectId: str, commitId: str, elementId: str, ctx: Context) -> Dict[str, Any]:
-    """Get ProjectUsage that originates the provided element"""
-    return await make_request("GET", f"/projects/{projectId}/commits/{commitId}/elements/{elementId}/projectUsage", ctx)
+#@mcp.tool()
+#async def get_project_usage_by_project_commit_element(projectId: str, commitId: str, elementId: str, ctx: Context) -> Dict[str, Any]:
+#    """Get ProjectUsage that originates the provided element"""
+#    return await make_request("GET", f"/projects/{projectId}/commits/{commitId}/elements/{elementId}/projectUsage", ctx)
 
 @mcp.tool()
-async def get_relationships_by_project_commit_related_element(projectId: str, commitId: str, relatedElementId: str, ctx: Context, direction: Optional[str] = None) -> list[dict]:
+async def get_relationships_by_project_commit_related_element(projectId: str, commitId: str, relatedElementId: str, ctx: Context, direction: Optional[Literal['in', 'out', 'both']] = None) -> list[dict]:
     """Get relationships for a related element, direction can be 'in', 'out', or 'both'"""
     params = {}
     if direction: params["direction"] = direction
@@ -185,7 +185,7 @@ async def get_relationships_by_project_commit_related_element(projectId: str, co
 
 @mcp.tool()
 async def get_roots_by_project_commit(projectId: str, commitId: str, ctx: Context) -> list[dict]:
-    """Get root elements by project and commit"""
+    """Get root elements by project and commit id"""
     return await make_request("GET", f"/projects/{projectId}/commits/{commitId}/roots", ctx)
 
 #@mcp.tool()
@@ -197,24 +197,24 @@ async def get_roots_by_project_commit(projectId: str, commitId: str, ctx: Contex
 
 @mcp.tool()
 async def get_queries_by_project(projectId: str, ctx: Context) -> list[Query]:
-    """Get queries by project"""
+    """Get queries by project id"""
     return await make_request("GET", f"/projects/{projectId}/queries", ctx)
 
 @mcp.tool()
 async def get_query_by_project_and_id(projectId: str, queryId: str, ctx: Context) -> Query:
-    """Get query by project and ID"""
+    """Get query by project and query id"""
     return await make_request("GET", f"/projects/{projectId}/queries/{queryId}", ctx)
 
 @mcp.tool()
 async def get_query_results_by_project_id_query_id(projectId: str, queryId: str, ctx: Context, commitId: Optional[str] = None) -> list[dict]:
-    """Get query results by project and query ID"""
+    """Get query results by project and query id, if commit id isn't provided uses head of default branch"""
     params = {}
     if commitId: params["commitId"] = commitId
     return await make_request("GET", f"/projects/{projectId}/queries/{queryId}/results", ctx, query_params=params)
 
 @mcp.tool()
 async def get_query_results_by_project_id_query(projectId: str, query: QueryRequest, ctx: Context, commitId: Optional[str] = None) -> list[dict]:
-    """Get query results by project and commitId given query"""
+    """Get query results by project and given query, if commit id isn't provided uses head of default branch"""
     params = {}
     if commitId: params["commitId"] = commitId
     return await make_request("POST", f"/projects/{projectId}/query-results", ctx, body=query, query_params=params)
@@ -222,39 +222,39 @@ async def get_query_results_by_project_id_query(projectId: str, query: QueryRequ
 if not READ_ONLY:
     @mcp.tool()
     async def post_query_by_project(projectId: str, ctx: Context, body: QueryRequest) -> Query:
-        """Create query by project"""
+        """Create query in project"""
         return await make_request("POST", f"/projects/{projectId}/queries", ctx, body=body)
 
     @mcp.tool()
     async def put_query_by_project_and_id(projectId: str, queryId: str, ctx: Context, body: QueryRequest) -> Query:
-        """Update query by project and ID"""
+        """Update query in project and by query id"""
         return await make_request("PUT", f"/projects/{projectId}/queries/{queryId}", ctx, body=body)
 
     @mcp.tool()
     async def delete_query_by_project_and_id(projectId: str, queryId: str, ctx: Context) -> Query:
-        """Delete query by project and ID"""
+        """Delete query by project and query id"""
         return await make_request("DELETE", f"/projects/{projectId}/queries/{queryId}", ctx)
 
 
 @mcp.tool()
 async def get_tags_by_project(projectId: str, ctx: Context) -> list[Tag]:
-    """Get tags by project"""
+    """Get tags by project id"""
     return await make_request("GET", f"/projects/{projectId}/tags", ctx)
 
 @mcp.tool()
 async def get_tag_by_project_and_id(projectId: str, tagId: str, ctx: Context) -> Tag:
-    """Get tag by project and ID"""
+    """Get tag by project and tag id"""
     return await make_request("GET", f"/projects/{projectId}/tags/{tagId}", ctx)
 
 if not READ_ONLY:
     @mcp.tool()
     async def post_tag_by_project(projectId: str, ctx: Context, body: TagRequest) -> Tag:
-        """Create tag by project"""
+        """Create tag in project"""
         return await make_request("POST", f"/projects/{projectId}/tags", ctx, body=body)
 
     @mcp.tool()
     async def delete_tag_by_project_and_id(projectId: str, tagId: str, ctx: Context) -> Tag:
-        """Delete tag by project and ID"""
+        """Delete tag by project and tag id"""
         return await make_request("DELETE", f"/projects/{projectId}/tags/{tagId}", ctx)
 
 
