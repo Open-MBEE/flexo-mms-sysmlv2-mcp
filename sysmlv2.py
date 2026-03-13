@@ -68,6 +68,24 @@ class Commit(BaseModel):
     previousCommit: Optional[Identified] = None
     type: Literal['Commit'] = Field(default='Commit', alias='@type')
 
+class Payload(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, extra='allow')
+
+    id: str = Field(alias='@id')
+    type: str = Field(alias='@type')
+
+class DataVersionRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    payload: Optional[Payload]
+    identity: Optional[Identified]
+
+class CommitRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    type: Literal['Commit'] = Field(default='Commit', alias='@type')
+    change: list[DataVersionRequest]
+
 class PrimitiveConstraint(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     

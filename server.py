@@ -143,11 +143,11 @@ async def get_commit_by_project_and_id(projectId: str, commitId: str, ctx: Conte
 
 if not READ_ONLY:
     @mcp.tool()
-    async def post_commit_by_project(projectId: str, ctx: Context, body: Dict[str, Any], branchId: Optional[str]) -> Commit:
-        """Create commit in project, if branch id isn't specified commit will be made on project's default branch"""
+    async def post_commit_by_project(projectId: str, ctx: Context, body: CommitRequest, branchId: Optional[str]) -> Commit:
+        """Create commit in project, if branch id isn't specified commit will be made on project's default branch. To delete an element, include the element's identity object with @id, without a payload, in the change list"""
         params = {}
         if branchId: params["branchId"] = branchId
-        return await make_request("POST", f"/projects/{projectId}/commits", ctx, body=body, query_params=params)
+        return await make_request("POST", f"/projects/{projectId}/commits", ctx, body=body.model_dump(), query_params=params)
 
 
 #@mcp.tool()
