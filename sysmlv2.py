@@ -9,6 +9,7 @@ class Identified(BaseModel):
 class BranchRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     
+    id: Optional[str] = Field(alias='@id')
     name: str
     head: Identified
 
@@ -36,6 +37,7 @@ class Project(BaseModel):
 class ProjectRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     
+    id: Optional[str] = Field(alias='@id')
     name: str
     description: Optional[str] = None
     defaultBranch: Optional[Identified] = None
@@ -55,6 +57,7 @@ class Tag(BaseModel):
 class TagRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     
+    id: Optional[str] = Field(alias='@id')
     name: str
     taggedCommit: Identified
 
@@ -89,8 +92,8 @@ class CommitRequest(BaseModel):
 class PrimitiveConstraint(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     
-    value: Union[str, int, float, bool, Identified]
-    operator: Literal['=', '>', '<']
+    value: list[Union[str, int, float, bool, Identified]]
+    operator: Literal['=', '>', '<', '>=', '<=']
     inverse: bool
     property: str
     
