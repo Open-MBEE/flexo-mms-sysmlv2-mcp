@@ -47,7 +47,6 @@ async def make_request(
                 response = await client.delete(full_url, headers=headers, params=query_params)
             else:
                 return {"error": f"Unsupported method: {method}"}
-            
             response.raise_for_status()
             
             if response.headers.get("content-type", "").startswith("application/json"):
@@ -143,11 +142,12 @@ async def get_commit_by_project_and_id(projectId: str, commitId: str, ctx: Conte
 
 if not READ_ONLY:
     @mcp.tool()
-    async def post_commit_by_project(projectId: str, ctx: Context, body: CommitRequest, branchId: Optional[str]) -> Commit:
-        """Create commit in project, if branch id isn't specified commit will be made on project's default branch. To delete an element, include the element's identity object with @id, without a payload, in the change list"""
+    async def post_commit_by_project(projectId: str, ctx: Context, body: CommitRequest, branchId: Optional[str], replace: Optional[str]) -> Commit:
+        """Create commit in project, if branchId isn't specified commit will be made on project's default branch. To delete an element, include the element's identity object with @id, without a payload, in the change list. set replace to true to replace the model"""
         params = {}
         if branchId: params["branchId"] = branchId
-        return await make_request("POST", f"/projects/{projectId}/commits", ctx, body=body.model_dump(), query_params=params)
+        if replace is not None and replace == 'true': params['replace'] = 'true'
+        return await make_request("POST", f"/projects/{projectId}/commits", ctx, body=body, query_params=params)
 
 
 #@mcp.tool()
